@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Inlined struct setters (#602)
 - Bumped MSRV from 1.59 to 1.60 (#709)
 - Replaced `const fn name()` with associated `NAME` constants (#715)
-- Separate low-level `*Fn` structs an high-level extension wrappers between instance and device functions, for the following extensions: (#TODO)
+- Separate low-level `*Fn` structs an high-level extension wrappers between instance and device functions, for the following extensions: (#734)
   - `VK_KHR_swapchain`
   - `VK_KHR_video_queue`
   - `VK_KHR_device_group`
