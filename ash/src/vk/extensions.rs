@@ -175,7 +175,56 @@ impl Result {
     pub const ERROR_SURFACE_LOST_KHR: Self = Self(-1_000_000_000);
     pub const ERROR_NATIVE_WINDOW_IN_USE_KHR: Self = Self(-1_000_000_001);
 }
-impl KhrSwapchainFn {
+impl KhrSwapchainInstanceFn {
+    pub const NAME: &'static ::std::ffi::CStr =
+        unsafe { ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"VK_KHR_swapchain\0") };
+    pub const SPEC_VERSION: u32 = 70u32;
+}
+#[allow(non_camel_case_types)]
+pub type PFN_vkGetPhysicalDevicePresentRectanglesKHR = unsafe extern "system" fn(
+    physical_device: PhysicalDevice,
+    surface: SurfaceKHR,
+    p_rect_count: *mut u32,
+    p_rects: *mut Rect2D,
+) -> Result;
+#[derive(Clone)]
+pub struct KhrSwapchainInstanceFn {
+    pub get_physical_device_present_rectangles_khr: PFN_vkGetPhysicalDevicePresentRectanglesKHR,
+}
+unsafe impl Send for KhrSwapchainInstanceFn {}
+unsafe impl Sync for KhrSwapchainInstanceFn {}
+impl KhrSwapchainInstanceFn {
+    pub fn load<F>(mut _f: F) -> Self
+    where
+        F: FnMut(&::std::ffi::CStr) -> *const c_void,
+    {
+        Self {
+            get_physical_device_present_rectangles_khr: unsafe {
+                unsafe extern "system" fn get_physical_device_present_rectangles_khr(
+                    _physical_device: PhysicalDevice,
+                    _surface: SurfaceKHR,
+                    _p_rect_count: *mut u32,
+                    _p_rects: *mut Rect2D,
+                ) -> Result {
+                    panic!(concat!(
+                        "Unable to load ",
+                        stringify!(get_physical_device_present_rectangles_khr)
+                    ))
+                }
+                let cname = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    b"vkGetPhysicalDevicePresentRectanglesKHR\0",
+                );
+                let val = _f(cname);
+                if val.is_null() {
+                    get_physical_device_present_rectangles_khr
+                } else {
+                    ::std::mem::transmute(val)
+                }
+            },
+        }
+    }
+}
+impl KhrSwapchainDeviceFn {
     pub const NAME: &'static ::std::ffi::CStr =
         unsafe { ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"VK_KHR_swapchain\0") };
     pub const SPEC_VERSION: u32 = 70u32;
@@ -224,20 +273,13 @@ pub type PFN_vkGetDeviceGroupSurfacePresentModesKHR = unsafe extern "system" fn(
     p_modes: *mut DeviceGroupPresentModeFlagsKHR,
 ) -> Result;
 #[allow(non_camel_case_types)]
-pub type PFN_vkGetPhysicalDevicePresentRectanglesKHR = unsafe extern "system" fn(
-    physical_device: PhysicalDevice,
-    surface: SurfaceKHR,
-    p_rect_count: *mut u32,
-    p_rects: *mut Rect2D,
-) -> Result;
-#[allow(non_camel_case_types)]
 pub type PFN_vkAcquireNextImage2KHR = unsafe extern "system" fn(
     device: Device,
     p_acquire_info: *const AcquireNextImageInfoKHR,
     p_image_index: *mut u32,
 ) -> Result;
 #[derive(Clone)]
-pub struct KhrSwapchainFn {
+pub struct KhrSwapchainDeviceFn {
     pub create_swapchain_khr: PFN_vkCreateSwapchainKHR,
     pub destroy_swapchain_khr: PFN_vkDestroySwapchainKHR,
     pub get_swapchain_images_khr: PFN_vkGetSwapchainImagesKHR,
@@ -245,12 +287,11 @@ pub struct KhrSwapchainFn {
     pub queue_present_khr: PFN_vkQueuePresentKHR,
     pub get_device_group_present_capabilities_khr: PFN_vkGetDeviceGroupPresentCapabilitiesKHR,
     pub get_device_group_surface_present_modes_khr: PFN_vkGetDeviceGroupSurfacePresentModesKHR,
-    pub get_physical_device_present_rectangles_khr: PFN_vkGetPhysicalDevicePresentRectanglesKHR,
     pub acquire_next_image2_khr: PFN_vkAcquireNextImage2KHR,
 }
-unsafe impl Send for KhrSwapchainFn {}
-unsafe impl Sync for KhrSwapchainFn {}
-impl KhrSwapchainFn {
+unsafe impl Send for KhrSwapchainDeviceFn {}
+unsafe impl Sync for KhrSwapchainDeviceFn {}
+impl KhrSwapchainDeviceFn {
     pub fn load<F>(mut _f: F) -> Self
     where
         F: FnMut(&::std::ffi::CStr) -> *const c_void,
@@ -390,28 +431,6 @@ impl KhrSwapchainFn {
                 let val = _f(cname);
                 if val.is_null() {
                     get_device_group_surface_present_modes_khr
-                } else {
-                    ::std::mem::transmute(val)
-                }
-            },
-            get_physical_device_present_rectangles_khr: unsafe {
-                unsafe extern "system" fn get_physical_device_present_rectangles_khr(
-                    _physical_device: PhysicalDevice,
-                    _surface: SurfaceKHR,
-                    _p_rect_count: *mut u32,
-                    _p_rects: *mut Rect2D,
-                ) -> Result {
-                    panic!(concat!(
-                        "Unable to load ",
-                        stringify!(get_physical_device_present_rectangles_khr)
-                    ))
-                }
-                let cname = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
-                    b"vkGetPhysicalDevicePresentRectanglesKHR\0",
-                );
-                let val = _f(cname);
-                if val.is_null() {
-                    get_physical_device_present_rectangles_khr
                 } else {
                     ::std::mem::transmute(val)
                 }
@@ -1719,7 +1738,7 @@ impl StructureType {
     pub const DEBUG_MARKER_OBJECT_TAG_INFO_EXT: Self = Self(1_000_022_001);
     pub const DEBUG_MARKER_MARKER_INFO_EXT: Self = Self(1_000_022_002);
 }
-impl KhrVideoQueueFn {
+impl KhrVideoQueueInstanceFn {
     pub const NAME: &'static ::std::ffi::CStr =
         unsafe { ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"VK_KHR_video_queue\0") };
     pub const SPEC_VERSION: u32 = 8u32;
@@ -1737,6 +1756,71 @@ pub type PFN_vkGetPhysicalDeviceVideoFormatPropertiesKHR = unsafe extern "system
     p_video_format_property_count: *mut u32,
     p_video_format_properties: *mut VideoFormatPropertiesKHR,
 ) -> Result;
+#[derive(Clone)]
+pub struct KhrVideoQueueInstanceFn {
+    pub get_physical_device_video_capabilities_khr: PFN_vkGetPhysicalDeviceVideoCapabilitiesKHR,
+    pub get_physical_device_video_format_properties_khr:
+        PFN_vkGetPhysicalDeviceVideoFormatPropertiesKHR,
+}
+unsafe impl Send for KhrVideoQueueInstanceFn {}
+unsafe impl Sync for KhrVideoQueueInstanceFn {}
+impl KhrVideoQueueInstanceFn {
+    pub fn load<F>(mut _f: F) -> Self
+    where
+        F: FnMut(&::std::ffi::CStr) -> *const c_void,
+    {
+        Self {
+            get_physical_device_video_capabilities_khr: unsafe {
+                unsafe extern "system" fn get_physical_device_video_capabilities_khr(
+                    _physical_device: PhysicalDevice,
+                    _p_video_profile: *const VideoProfileInfoKHR,
+                    _p_capabilities: *mut VideoCapabilitiesKHR,
+                ) -> Result {
+                    panic!(concat!(
+                        "Unable to load ",
+                        stringify!(get_physical_device_video_capabilities_khr)
+                    ))
+                }
+                let cname = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    b"vkGetPhysicalDeviceVideoCapabilitiesKHR\0",
+                );
+                let val = _f(cname);
+                if val.is_null() {
+                    get_physical_device_video_capabilities_khr
+                } else {
+                    ::std::mem::transmute(val)
+                }
+            },
+            get_physical_device_video_format_properties_khr: unsafe {
+                unsafe extern "system" fn get_physical_device_video_format_properties_khr(
+                    _physical_device: PhysicalDevice,
+                    _p_video_format_info: *const PhysicalDeviceVideoFormatInfoKHR,
+                    _p_video_format_property_count: *mut u32,
+                    _p_video_format_properties: *mut VideoFormatPropertiesKHR,
+                ) -> Result {
+                    panic!(concat!(
+                        "Unable to load ",
+                        stringify!(get_physical_device_video_format_properties_khr)
+                    ))
+                }
+                let cname = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    b"vkGetPhysicalDeviceVideoFormatPropertiesKHR\0",
+                );
+                let val = _f(cname);
+                if val.is_null() {
+                    get_physical_device_video_format_properties_khr
+                } else {
+                    ::std::mem::transmute(val)
+                }
+            },
+        }
+    }
+}
+impl KhrVideoQueueDeviceFn {
+    pub const NAME: &'static ::std::ffi::CStr =
+        unsafe { ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"VK_KHR_video_queue\0") };
+    pub const SPEC_VERSION: u32 = 8u32;
+}
 #[allow(non_camel_case_types)]
 pub type PFN_vkCreateVideoSessionKHR = unsafe extern "system" fn(
     device: Device,
@@ -1799,10 +1883,7 @@ pub type PFN_vkCmdControlVideoCodingKHR = unsafe extern "system" fn(
     p_coding_control_info: *const VideoCodingControlInfoKHR,
 );
 #[derive(Clone)]
-pub struct KhrVideoQueueFn {
-    pub get_physical_device_video_capabilities_khr: PFN_vkGetPhysicalDeviceVideoCapabilitiesKHR,
-    pub get_physical_device_video_format_properties_khr:
-        PFN_vkGetPhysicalDeviceVideoFormatPropertiesKHR,
+pub struct KhrVideoQueueDeviceFn {
     pub create_video_session_khr: PFN_vkCreateVideoSessionKHR,
     pub destroy_video_session_khr: PFN_vkDestroyVideoSessionKHR,
     pub get_video_session_memory_requirements_khr: PFN_vkGetVideoSessionMemoryRequirementsKHR,
@@ -1814,57 +1895,14 @@ pub struct KhrVideoQueueFn {
     pub cmd_end_video_coding_khr: PFN_vkCmdEndVideoCodingKHR,
     pub cmd_control_video_coding_khr: PFN_vkCmdControlVideoCodingKHR,
 }
-unsafe impl Send for KhrVideoQueueFn {}
-unsafe impl Sync for KhrVideoQueueFn {}
-impl KhrVideoQueueFn {
+unsafe impl Send for KhrVideoQueueDeviceFn {}
+unsafe impl Sync for KhrVideoQueueDeviceFn {}
+impl KhrVideoQueueDeviceFn {
     pub fn load<F>(mut _f: F) -> Self
     where
         F: FnMut(&::std::ffi::CStr) -> *const c_void,
     {
         Self {
-            get_physical_device_video_capabilities_khr: unsafe {
-                unsafe extern "system" fn get_physical_device_video_capabilities_khr(
-                    _physical_device: PhysicalDevice,
-                    _p_video_profile: *const VideoProfileInfoKHR,
-                    _p_capabilities: *mut VideoCapabilitiesKHR,
-                ) -> Result {
-                    panic!(concat!(
-                        "Unable to load ",
-                        stringify!(get_physical_device_video_capabilities_khr)
-                    ))
-                }
-                let cname = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
-                    b"vkGetPhysicalDeviceVideoCapabilitiesKHR\0",
-                );
-                let val = _f(cname);
-                if val.is_null() {
-                    get_physical_device_video_capabilities_khr
-                } else {
-                    ::std::mem::transmute(val)
-                }
-            },
-            get_physical_device_video_format_properties_khr: unsafe {
-                unsafe extern "system" fn get_physical_device_video_format_properties_khr(
-                    _physical_device: PhysicalDevice,
-                    _p_video_format_info: *const PhysicalDeviceVideoFormatInfoKHR,
-                    _p_video_format_property_count: *mut u32,
-                    _p_video_format_properties: *mut VideoFormatPropertiesKHR,
-                ) -> Result {
-                    panic!(concat!(
-                        "Unable to load ",
-                        stringify!(get_physical_device_video_format_properties_khr)
-                    ))
-                }
-                let cname = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
-                    b"vkGetPhysicalDeviceVideoFormatPropertiesKHR\0",
-                );
-                let val = _f(cname);
-                if val.is_null() {
-                    get_physical_device_video_format_properties_khr
-                } else {
-                    ::std::mem::transmute(val)
-                }
-            },
             create_video_session_khr: unsafe {
                 unsafe extern "system" fn create_video_session_khr(
                     _device: Device,
@@ -3666,7 +3704,50 @@ impl StructureType {
     pub const PHYSICAL_DEVICE_SPARSE_IMAGE_FORMAT_INFO_2_KHR: Self =
         Self::PHYSICAL_DEVICE_SPARSE_IMAGE_FORMAT_INFO_2;
 }
-impl KhrDeviceGroupFn {
+impl KhrDeviceGroupInstanceFn {
+    pub const NAME: &'static ::std::ffi::CStr =
+        unsafe { ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"VK_KHR_device_group\0") };
+    pub const SPEC_VERSION: u32 = 4u32;
+}
+#[derive(Clone)]
+pub struct KhrDeviceGroupInstanceFn {
+    pub get_physical_device_present_rectangles_khr:
+        crate::vk::PFN_vkGetPhysicalDevicePresentRectanglesKHR,
+}
+unsafe impl Send for KhrDeviceGroupInstanceFn {}
+unsafe impl Sync for KhrDeviceGroupInstanceFn {}
+impl KhrDeviceGroupInstanceFn {
+    pub fn load<F>(mut _f: F) -> Self
+    where
+        F: FnMut(&::std::ffi::CStr) -> *const c_void,
+    {
+        Self {
+            get_physical_device_present_rectangles_khr: unsafe {
+                unsafe extern "system" fn get_physical_device_present_rectangles_khr(
+                    _physical_device: PhysicalDevice,
+                    _surface: SurfaceKHR,
+                    _p_rect_count: *mut u32,
+                    _p_rects: *mut Rect2D,
+                ) -> Result {
+                    panic!(concat!(
+                        "Unable to load ",
+                        stringify!(get_physical_device_present_rectangles_khr)
+                    ))
+                }
+                let cname = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    b"vkGetPhysicalDevicePresentRectanglesKHR\0",
+                );
+                let val = _f(cname);
+                if val.is_null() {
+                    get_physical_device_present_rectangles_khr
+                } else {
+                    ::std::mem::transmute(val)
+                }
+            },
+        }
+    }
+}
+impl KhrDeviceGroupDeviceFn {
     pub const NAME: &'static ::std::ffi::CStr =
         unsafe { ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"VK_KHR_device_group\0") };
     pub const SPEC_VERSION: u32 = 4u32;
@@ -3693,7 +3774,7 @@ pub type PFN_vkCmdDispatchBase = unsafe extern "system" fn(
     group_count_z: u32,
 );
 #[derive(Clone)]
-pub struct KhrDeviceGroupFn {
+pub struct KhrDeviceGroupDeviceFn {
     pub get_device_group_peer_memory_features_khr: PFN_vkGetDeviceGroupPeerMemoryFeatures,
     pub cmd_set_device_mask_khr: PFN_vkCmdSetDeviceMask,
     pub cmd_dispatch_base_khr: PFN_vkCmdDispatchBase,
@@ -3701,13 +3782,11 @@ pub struct KhrDeviceGroupFn {
         crate::vk::PFN_vkGetDeviceGroupPresentCapabilitiesKHR,
     pub get_device_group_surface_present_modes_khr:
         crate::vk::PFN_vkGetDeviceGroupSurfacePresentModesKHR,
-    pub get_physical_device_present_rectangles_khr:
-        crate::vk::PFN_vkGetPhysicalDevicePresentRectanglesKHR,
     pub acquire_next_image2_khr: crate::vk::PFN_vkAcquireNextImage2KHR,
 }
-unsafe impl Send for KhrDeviceGroupFn {}
-unsafe impl Sync for KhrDeviceGroupFn {}
-impl KhrDeviceGroupFn {
+unsafe impl Send for KhrDeviceGroupDeviceFn {}
+unsafe impl Sync for KhrDeviceGroupDeviceFn {}
+impl KhrDeviceGroupDeviceFn {
     pub fn load<F>(mut _f: F) -> Self
     where
         F: FnMut(&::std::ffi::CStr) -> *const c_void,
@@ -3816,28 +3895,6 @@ impl KhrDeviceGroupFn {
                 let val = _f(cname);
                 if val.is_null() {
                     get_device_group_surface_present_modes_khr
-                } else {
-                    ::std::mem::transmute(val)
-                }
-            },
-            get_physical_device_present_rectangles_khr: unsafe {
-                unsafe extern "system" fn get_physical_device_present_rectangles_khr(
-                    _physical_device: PhysicalDevice,
-                    _surface: SurfaceKHR,
-                    _p_rect_count: *mut u32,
-                    _p_rects: *mut Rect2D,
-                ) -> Result {
-                    panic!(concat!(
-                        "Unable to load ",
-                        stringify!(get_physical_device_present_rectangles_khr)
-                    ))
-                }
-                let cname = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
-                    b"vkGetPhysicalDevicePresentRectanglesKHR\0",
-                );
-                let val = _f(cname);
-                if val.is_null() {
-                    get_physical_device_present_rectangles_khr
                 } else {
                     ::std::mem::transmute(val)
                 }
@@ -6420,7 +6477,7 @@ impl StructureType {
     pub const IMPORT_FENCE_FD_INFO_KHR: Self = Self(1_000_115_000);
     pub const FENCE_GET_FD_INFO_KHR: Self = Self(1_000_115_001);
 }
-impl KhrPerformanceQueryFn {
+impl KhrPerformanceQueryInstanceFn {
     pub const NAME: &'static ::std::ffi::CStr =
         unsafe { ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"VK_KHR_performance_query\0") };
     pub const SPEC_VERSION: u32 = 1u32;
@@ -6441,23 +6498,16 @@ pub type PFN_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR =
         p_performance_query_create_info: *const QueryPoolPerformanceCreateInfoKHR,
         p_num_passes: *mut u32,
     );
-#[allow(non_camel_case_types)]
-pub type PFN_vkAcquireProfilingLockKHR =
-    unsafe extern "system" fn(device: Device, p_info: *const AcquireProfilingLockInfoKHR) -> Result;
-#[allow(non_camel_case_types)]
-pub type PFN_vkReleaseProfilingLockKHR = unsafe extern "system" fn(device: Device);
 #[derive(Clone)]
-pub struct KhrPerformanceQueryFn {
+pub struct KhrPerformanceQueryInstanceFn {
     pub enumerate_physical_device_queue_family_performance_query_counters_khr:
         PFN_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR,
     pub get_physical_device_queue_family_performance_query_passes_khr:
         PFN_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR,
-    pub acquire_profiling_lock_khr: PFN_vkAcquireProfilingLockKHR,
-    pub release_profiling_lock_khr: PFN_vkReleaseProfilingLockKHR,
 }
-unsafe impl Send for KhrPerformanceQueryFn {}
-unsafe impl Sync for KhrPerformanceQueryFn {}
-impl KhrPerformanceQueryFn {
+unsafe impl Send for KhrPerformanceQueryInstanceFn {}
+unsafe impl Sync for KhrPerformanceQueryInstanceFn {}
+impl KhrPerformanceQueryInstanceFn {
     pub fn load<F>(mut _f: F) -> Self
     where
         F: FnMut(&::std::ffi::CStr) -> *const c_void,
@@ -6509,6 +6559,32 @@ impl KhrPerformanceQueryFn {
                     ::std::mem::transmute(val)
                 }
             },
+        }
+    }
+}
+impl KhrPerformanceQueryDeviceFn {
+    pub const NAME: &'static ::std::ffi::CStr =
+        unsafe { ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"VK_KHR_performance_query\0") };
+    pub const SPEC_VERSION: u32 = 1u32;
+}
+#[allow(non_camel_case_types)]
+pub type PFN_vkAcquireProfilingLockKHR =
+    unsafe extern "system" fn(device: Device, p_info: *const AcquireProfilingLockInfoKHR) -> Result;
+#[allow(non_camel_case_types)]
+pub type PFN_vkReleaseProfilingLockKHR = unsafe extern "system" fn(device: Device);
+#[derive(Clone)]
+pub struct KhrPerformanceQueryDeviceFn {
+    pub acquire_profiling_lock_khr: PFN_vkAcquireProfilingLockKHR,
+    pub release_profiling_lock_khr: PFN_vkReleaseProfilingLockKHR,
+}
+unsafe impl Send for KhrPerformanceQueryDeviceFn {}
+unsafe impl Sync for KhrPerformanceQueryDeviceFn {}
+impl KhrPerformanceQueryDeviceFn {
+    pub fn load<F>(mut _f: F) -> Self
+    where
+        F: FnMut(&::std::ffi::CStr) -> *const c_void,
+    {
+        Self {
             acquire_profiling_lock_khr: unsafe {
                 unsafe extern "system" fn acquire_profiling_lock_khr(
                     _device: Device,
@@ -7029,7 +7105,114 @@ impl StructureType {
     pub const MEMORY_DEDICATED_REQUIREMENTS_KHR: Self = Self::MEMORY_DEDICATED_REQUIREMENTS;
     pub const MEMORY_DEDICATED_ALLOCATE_INFO_KHR: Self = Self::MEMORY_DEDICATED_ALLOCATE_INFO;
 }
-impl ExtDebugUtilsFn {
+impl ExtDebugUtilsInstanceFn {
+    pub const NAME: &'static ::std::ffi::CStr =
+        unsafe { ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"VK_EXT_debug_utils\0") };
+    pub const SPEC_VERSION: u32 = 2u32;
+}
+#[allow(non_camel_case_types)]
+pub type PFN_vkCreateDebugUtilsMessengerEXT = unsafe extern "system" fn(
+    instance: Instance,
+    p_create_info: *const DebugUtilsMessengerCreateInfoEXT,
+    p_allocator: *const AllocationCallbacks,
+    p_messenger: *mut DebugUtilsMessengerEXT,
+) -> Result;
+#[allow(non_camel_case_types)]
+pub type PFN_vkDestroyDebugUtilsMessengerEXT = unsafe extern "system" fn(
+    instance: Instance,
+    messenger: DebugUtilsMessengerEXT,
+    p_allocator: *const AllocationCallbacks,
+);
+#[allow(non_camel_case_types)]
+pub type PFN_vkSubmitDebugUtilsMessageEXT = unsafe extern "system" fn(
+    instance: Instance,
+    message_severity: DebugUtilsMessageSeverityFlagsEXT,
+    message_types: DebugUtilsMessageTypeFlagsEXT,
+    p_callback_data: *const DebugUtilsMessengerCallbackDataEXT,
+);
+#[derive(Clone)]
+pub struct ExtDebugUtilsInstanceFn {
+    pub create_debug_utils_messenger_ext: PFN_vkCreateDebugUtilsMessengerEXT,
+    pub destroy_debug_utils_messenger_ext: PFN_vkDestroyDebugUtilsMessengerEXT,
+    pub submit_debug_utils_message_ext: PFN_vkSubmitDebugUtilsMessageEXT,
+}
+unsafe impl Send for ExtDebugUtilsInstanceFn {}
+unsafe impl Sync for ExtDebugUtilsInstanceFn {}
+impl ExtDebugUtilsInstanceFn {
+    pub fn load<F>(mut _f: F) -> Self
+    where
+        F: FnMut(&::std::ffi::CStr) -> *const c_void,
+    {
+        Self {
+            create_debug_utils_messenger_ext: unsafe {
+                unsafe extern "system" fn create_debug_utils_messenger_ext(
+                    _instance: Instance,
+                    _p_create_info: *const DebugUtilsMessengerCreateInfoEXT,
+                    _p_allocator: *const AllocationCallbacks,
+                    _p_messenger: *mut DebugUtilsMessengerEXT,
+                ) -> Result {
+                    panic!(concat!(
+                        "Unable to load ",
+                        stringify!(create_debug_utils_messenger_ext)
+                    ))
+                }
+                let cname = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    b"vkCreateDebugUtilsMessengerEXT\0",
+                );
+                let val = _f(cname);
+                if val.is_null() {
+                    create_debug_utils_messenger_ext
+                } else {
+                    ::std::mem::transmute(val)
+                }
+            },
+            destroy_debug_utils_messenger_ext: unsafe {
+                unsafe extern "system" fn destroy_debug_utils_messenger_ext(
+                    _instance: Instance,
+                    _messenger: DebugUtilsMessengerEXT,
+                    _p_allocator: *const AllocationCallbacks,
+                ) {
+                    panic!(concat!(
+                        "Unable to load ",
+                        stringify!(destroy_debug_utils_messenger_ext)
+                    ))
+                }
+                let cname = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    b"vkDestroyDebugUtilsMessengerEXT\0",
+                );
+                let val = _f(cname);
+                if val.is_null() {
+                    destroy_debug_utils_messenger_ext
+                } else {
+                    ::std::mem::transmute(val)
+                }
+            },
+            submit_debug_utils_message_ext: unsafe {
+                unsafe extern "system" fn submit_debug_utils_message_ext(
+                    _instance: Instance,
+                    _message_severity: DebugUtilsMessageSeverityFlagsEXT,
+                    _message_types: DebugUtilsMessageTypeFlagsEXT,
+                    _p_callback_data: *const DebugUtilsMessengerCallbackDataEXT,
+                ) {
+                    panic!(concat!(
+                        "Unable to load ",
+                        stringify!(submit_debug_utils_message_ext)
+                    ))
+                }
+                let cname = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    b"vkSubmitDebugUtilsMessageEXT\0",
+                );
+                let val = _f(cname);
+                if val.is_null() {
+                    submit_debug_utils_message_ext
+                } else {
+                    ::std::mem::transmute(val)
+                }
+            },
+        }
+    }
+}
+impl ExtDebugUtilsDeviceFn {
     pub const NAME: &'static ::std::ffi::CStr =
         unsafe { ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"VK_EXT_debug_utils\0") };
     pub const SPEC_VERSION: u32 = 2u32;
@@ -7064,28 +7247,8 @@ pub type PFN_vkCmdInsertDebugUtilsLabelEXT = unsafe extern "system" fn(
     command_buffer: CommandBuffer,
     p_label_info: *const DebugUtilsLabelEXT,
 );
-#[allow(non_camel_case_types)]
-pub type PFN_vkCreateDebugUtilsMessengerEXT = unsafe extern "system" fn(
-    instance: Instance,
-    p_create_info: *const DebugUtilsMessengerCreateInfoEXT,
-    p_allocator: *const AllocationCallbacks,
-    p_messenger: *mut DebugUtilsMessengerEXT,
-) -> Result;
-#[allow(non_camel_case_types)]
-pub type PFN_vkDestroyDebugUtilsMessengerEXT = unsafe extern "system" fn(
-    instance: Instance,
-    messenger: DebugUtilsMessengerEXT,
-    p_allocator: *const AllocationCallbacks,
-);
-#[allow(non_camel_case_types)]
-pub type PFN_vkSubmitDebugUtilsMessageEXT = unsafe extern "system" fn(
-    instance: Instance,
-    message_severity: DebugUtilsMessageSeverityFlagsEXT,
-    message_types: DebugUtilsMessageTypeFlagsEXT,
-    p_callback_data: *const DebugUtilsMessengerCallbackDataEXT,
-);
 #[derive(Clone)]
-pub struct ExtDebugUtilsFn {
+pub struct ExtDebugUtilsDeviceFn {
     pub set_debug_utils_object_name_ext: PFN_vkSetDebugUtilsObjectNameEXT,
     pub set_debug_utils_object_tag_ext: PFN_vkSetDebugUtilsObjectTagEXT,
     pub queue_begin_debug_utils_label_ext: PFN_vkQueueBeginDebugUtilsLabelEXT,
@@ -7094,13 +7257,10 @@ pub struct ExtDebugUtilsFn {
     pub cmd_begin_debug_utils_label_ext: PFN_vkCmdBeginDebugUtilsLabelEXT,
     pub cmd_end_debug_utils_label_ext: PFN_vkCmdEndDebugUtilsLabelEXT,
     pub cmd_insert_debug_utils_label_ext: PFN_vkCmdInsertDebugUtilsLabelEXT,
-    pub create_debug_utils_messenger_ext: PFN_vkCreateDebugUtilsMessengerEXT,
-    pub destroy_debug_utils_messenger_ext: PFN_vkDestroyDebugUtilsMessengerEXT,
-    pub submit_debug_utils_message_ext: PFN_vkSubmitDebugUtilsMessageEXT,
 }
-unsafe impl Send for ExtDebugUtilsFn {}
-unsafe impl Sync for ExtDebugUtilsFn {}
-impl ExtDebugUtilsFn {
+unsafe impl Send for ExtDebugUtilsDeviceFn {}
+unsafe impl Sync for ExtDebugUtilsDeviceFn {}
+impl ExtDebugUtilsDeviceFn {
     pub fn load<F>(mut _f: F) -> Self
     where
         F: FnMut(&::std::ffi::CStr) -> *const c_void,
@@ -7258,71 +7418,6 @@ impl ExtDebugUtilsFn {
                 let val = _f(cname);
                 if val.is_null() {
                     cmd_insert_debug_utils_label_ext
-                } else {
-                    ::std::mem::transmute(val)
-                }
-            },
-            create_debug_utils_messenger_ext: unsafe {
-                unsafe extern "system" fn create_debug_utils_messenger_ext(
-                    _instance: Instance,
-                    _p_create_info: *const DebugUtilsMessengerCreateInfoEXT,
-                    _p_allocator: *const AllocationCallbacks,
-                    _p_messenger: *mut DebugUtilsMessengerEXT,
-                ) -> Result {
-                    panic!(concat!(
-                        "Unable to load ",
-                        stringify!(create_debug_utils_messenger_ext)
-                    ))
-                }
-                let cname = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
-                    b"vkCreateDebugUtilsMessengerEXT\0",
-                );
-                let val = _f(cname);
-                if val.is_null() {
-                    create_debug_utils_messenger_ext
-                } else {
-                    ::std::mem::transmute(val)
-                }
-            },
-            destroy_debug_utils_messenger_ext: unsafe {
-                unsafe extern "system" fn destroy_debug_utils_messenger_ext(
-                    _instance: Instance,
-                    _messenger: DebugUtilsMessengerEXT,
-                    _p_allocator: *const AllocationCallbacks,
-                ) {
-                    panic!(concat!(
-                        "Unable to load ",
-                        stringify!(destroy_debug_utils_messenger_ext)
-                    ))
-                }
-                let cname = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
-                    b"vkDestroyDebugUtilsMessengerEXT\0",
-                );
-                let val = _f(cname);
-                if val.is_null() {
-                    destroy_debug_utils_messenger_ext
-                } else {
-                    ::std::mem::transmute(val)
-                }
-            },
-            submit_debug_utils_message_ext: unsafe {
-                unsafe extern "system" fn submit_debug_utils_message_ext(
-                    _instance: Instance,
-                    _message_severity: DebugUtilsMessageSeverityFlagsEXT,
-                    _message_types: DebugUtilsMessageTypeFlagsEXT,
-                    _p_callback_data: *const DebugUtilsMessengerCallbackDataEXT,
-                ) {
-                    panic!(concat!(
-                        "Unable to load ",
-                        stringify!(submit_debug_utils_message_ext)
-                    ))
-                }
-                let cname = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
-                    b"vkSubmitDebugUtilsMessageEXT\0",
-                );
-                let val = _f(cname);
-                if val.is_null() {
-                    submit_debug_utils_message_ext
                 } else {
                     ::std::mem::transmute(val)
                 }
@@ -7592,7 +7687,55 @@ impl ExtShaderStencilExportFn {
         Self {}
     }
 }
-impl ExtSampleLocationsFn {
+impl ExtSampleLocationsInstanceFn {
+    pub const NAME: &'static ::std::ffi::CStr =
+        unsafe { ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"VK_EXT_sample_locations\0") };
+    pub const SPEC_VERSION: u32 = 1u32;
+}
+#[allow(non_camel_case_types)]
+pub type PFN_vkGetPhysicalDeviceMultisamplePropertiesEXT = unsafe extern "system" fn(
+    physical_device: PhysicalDevice,
+    samples: SampleCountFlags,
+    p_multisample_properties: *mut MultisamplePropertiesEXT,
+);
+#[derive(Clone)]
+pub struct ExtSampleLocationsInstanceFn {
+    pub get_physical_device_multisample_properties_ext:
+        PFN_vkGetPhysicalDeviceMultisamplePropertiesEXT,
+}
+unsafe impl Send for ExtSampleLocationsInstanceFn {}
+unsafe impl Sync for ExtSampleLocationsInstanceFn {}
+impl ExtSampleLocationsInstanceFn {
+    pub fn load<F>(mut _f: F) -> Self
+    where
+        F: FnMut(&::std::ffi::CStr) -> *const c_void,
+    {
+        Self {
+            get_physical_device_multisample_properties_ext: unsafe {
+                unsafe extern "system" fn get_physical_device_multisample_properties_ext(
+                    _physical_device: PhysicalDevice,
+                    _samples: SampleCountFlags,
+                    _p_multisample_properties: *mut MultisamplePropertiesEXT,
+                ) {
+                    panic!(concat!(
+                        "Unable to load ",
+                        stringify!(get_physical_device_multisample_properties_ext)
+                    ))
+                }
+                let cname = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    b"vkGetPhysicalDeviceMultisamplePropertiesEXT\0",
+                );
+                let val = _f(cname);
+                if val.is_null() {
+                    get_physical_device_multisample_properties_ext
+                } else {
+                    ::std::mem::transmute(val)
+                }
+            },
+        }
+    }
+}
+impl ExtSampleLocationsDeviceFn {
     pub const NAME: &'static ::std::ffi::CStr =
         unsafe { ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"VK_EXT_sample_locations\0") };
     pub const SPEC_VERSION: u32 = 1u32;
@@ -7602,21 +7745,13 @@ pub type PFN_vkCmdSetSampleLocationsEXT = unsafe extern "system" fn(
     command_buffer: CommandBuffer,
     p_sample_locations_info: *const SampleLocationsInfoEXT,
 );
-#[allow(non_camel_case_types)]
-pub type PFN_vkGetPhysicalDeviceMultisamplePropertiesEXT = unsafe extern "system" fn(
-    physical_device: PhysicalDevice,
-    samples: SampleCountFlags,
-    p_multisample_properties: *mut MultisamplePropertiesEXT,
-);
 #[derive(Clone)]
-pub struct ExtSampleLocationsFn {
+pub struct ExtSampleLocationsDeviceFn {
     pub cmd_set_sample_locations_ext: PFN_vkCmdSetSampleLocationsEXT,
-    pub get_physical_device_multisample_properties_ext:
-        PFN_vkGetPhysicalDeviceMultisamplePropertiesEXT,
 }
-unsafe impl Send for ExtSampleLocationsFn {}
-unsafe impl Sync for ExtSampleLocationsFn {}
-impl ExtSampleLocationsFn {
+unsafe impl Send for ExtSampleLocationsDeviceFn {}
+unsafe impl Sync for ExtSampleLocationsDeviceFn {}
+impl ExtSampleLocationsDeviceFn {
     pub fn load<F>(mut _f: F) -> Self
     where
         F: FnMut(&::std::ffi::CStr) -> *const c_void,
@@ -7638,27 +7773,6 @@ impl ExtSampleLocationsFn {
                 let val = _f(cname);
                 if val.is_null() {
                     cmd_set_sample_locations_ext
-                } else {
-                    ::std::mem::transmute(val)
-                }
-            },
-            get_physical_device_multisample_properties_ext: unsafe {
-                unsafe extern "system" fn get_physical_device_multisample_properties_ext(
-                    _physical_device: PhysicalDevice,
-                    _samples: SampleCountFlags,
-                    _p_multisample_properties: *mut MultisamplePropertiesEXT,
-                ) {
-                    panic!(concat!(
-                        "Unable to load ",
-                        stringify!(get_physical_device_multisample_properties_ext)
-                    ))
-                }
-                let cname = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
-                    b"vkGetPhysicalDeviceMultisamplePropertiesEXT\0",
-                );
-                let val = _f(cname);
-                if val.is_null() {
-                    get_physical_device_multisample_properties_ext
                 } else {
                     ::std::mem::transmute(val)
                 }
@@ -10562,7 +10676,7 @@ impl AmdPipelineCompilerControlFn {
 impl StructureType {
     pub const PIPELINE_COMPILER_CONTROL_CREATE_INFO_AMD: Self = Self(1_000_183_000);
 }
-impl ExtCalibratedTimestampsFn {
+impl ExtCalibratedTimestampsInstanceFn {
     pub const NAME: &'static ::std::ffi::CStr = unsafe {
         ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"VK_EXT_calibrated_timestamps\0")
     };
@@ -10574,23 +10688,14 @@ pub type PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT = unsafe extern "sys
     p_time_domain_count: *mut u32,
     p_time_domains: *mut TimeDomainEXT,
 ) -> Result;
-#[allow(non_camel_case_types)]
-pub type PFN_vkGetCalibratedTimestampsEXT = unsafe extern "system" fn(
-    device: Device,
-    timestamp_count: u32,
-    p_timestamp_infos: *const CalibratedTimestampInfoEXT,
-    p_timestamps: *mut u64,
-    p_max_deviation: *mut u64,
-) -> Result;
 #[derive(Clone)]
-pub struct ExtCalibratedTimestampsFn {
+pub struct ExtCalibratedTimestampsInstanceFn {
     pub get_physical_device_calibrateable_time_domains_ext:
         PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT,
-    pub get_calibrated_timestamps_ext: PFN_vkGetCalibratedTimestampsEXT,
 }
-unsafe impl Send for ExtCalibratedTimestampsFn {}
-unsafe impl Sync for ExtCalibratedTimestampsFn {}
-impl ExtCalibratedTimestampsFn {
+unsafe impl Send for ExtCalibratedTimestampsInstanceFn {}
+unsafe impl Sync for ExtCalibratedTimestampsInstanceFn {}
+impl ExtCalibratedTimestampsInstanceFn {
     pub fn load<F>(mut _f: F) -> Self
     where
         F: FnMut(&::std::ffi::CStr) -> *const c_void,
@@ -10617,6 +10722,35 @@ impl ExtCalibratedTimestampsFn {
                     ::std::mem::transmute(val)
                 }
             },
+        }
+    }
+}
+impl ExtCalibratedTimestampsDeviceFn {
+    pub const NAME: &'static ::std::ffi::CStr = unsafe {
+        ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"VK_EXT_calibrated_timestamps\0")
+    };
+    pub const SPEC_VERSION: u32 = 2u32;
+}
+#[allow(non_camel_case_types)]
+pub type PFN_vkGetCalibratedTimestampsEXT = unsafe extern "system" fn(
+    device: Device,
+    timestamp_count: u32,
+    p_timestamp_infos: *const CalibratedTimestampInfoEXT,
+    p_timestamps: *mut u64,
+    p_max_deviation: *mut u64,
+) -> Result;
+#[derive(Clone)]
+pub struct ExtCalibratedTimestampsDeviceFn {
+    pub get_calibrated_timestamps_ext: PFN_vkGetCalibratedTimestampsEXT,
+}
+unsafe impl Send for ExtCalibratedTimestampsDeviceFn {}
+unsafe impl Sync for ExtCalibratedTimestampsDeviceFn {}
+impl ExtCalibratedTimestampsDeviceFn {
+    pub fn load<F>(mut _f: F) -> Self
+    where
+        F: FnMut(&::std::ffi::CStr) -> *const c_void,
+    {
+        Self {
             get_calibrated_timestamps_ext: unsafe {
                 unsafe extern "system" fn get_calibrated_timestamps_ext(
                     _device: Device,
@@ -12089,7 +12223,7 @@ impl StructureType {
     pub const PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT: Self =
         Self::PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES;
 }
-impl KhrFragmentShadingRateFn {
+impl KhrFragmentShadingRateInstanceFn {
     pub const NAME: &'static ::std::ffi::CStr = unsafe {
         ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"VK_KHR_fragment_shading_rate\0")
     };
@@ -12101,21 +12235,14 @@ pub type PFN_vkGetPhysicalDeviceFragmentShadingRatesKHR = unsafe extern "system"
     p_fragment_shading_rate_count: *mut u32,
     p_fragment_shading_rates: *mut PhysicalDeviceFragmentShadingRateKHR,
 ) -> Result;
-#[allow(non_camel_case_types)]
-pub type PFN_vkCmdSetFragmentShadingRateKHR = unsafe extern "system" fn(
-    command_buffer: CommandBuffer,
-    p_fragment_size: *const Extent2D,
-    combiner_ops: *const [FragmentShadingRateCombinerOpKHR; 2usize],
-);
 #[derive(Clone)]
-pub struct KhrFragmentShadingRateFn {
+pub struct KhrFragmentShadingRateInstanceFn {
     pub get_physical_device_fragment_shading_rates_khr:
         PFN_vkGetPhysicalDeviceFragmentShadingRatesKHR,
-    pub cmd_set_fragment_shading_rate_khr: PFN_vkCmdSetFragmentShadingRateKHR,
 }
-unsafe impl Send for KhrFragmentShadingRateFn {}
-unsafe impl Sync for KhrFragmentShadingRateFn {}
-impl KhrFragmentShadingRateFn {
+unsafe impl Send for KhrFragmentShadingRateInstanceFn {}
+unsafe impl Sync for KhrFragmentShadingRateInstanceFn {}
+impl KhrFragmentShadingRateInstanceFn {
     pub fn load<F>(mut _f: F) -> Self
     where
         F: FnMut(&::std::ffi::CStr) -> *const c_void,
@@ -12142,6 +12269,33 @@ impl KhrFragmentShadingRateFn {
                     ::std::mem::transmute(val)
                 }
             },
+        }
+    }
+}
+impl KhrFragmentShadingRateDeviceFn {
+    pub const NAME: &'static ::std::ffi::CStr = unsafe {
+        ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"VK_KHR_fragment_shading_rate\0")
+    };
+    pub const SPEC_VERSION: u32 = 2u32;
+}
+#[allow(non_camel_case_types)]
+pub type PFN_vkCmdSetFragmentShadingRateKHR = unsafe extern "system" fn(
+    command_buffer: CommandBuffer,
+    p_fragment_size: *const Extent2D,
+    combiner_ops: *const [FragmentShadingRateCombinerOpKHR; 2usize],
+);
+#[derive(Clone)]
+pub struct KhrFragmentShadingRateDeviceFn {
+    pub cmd_set_fragment_shading_rate_khr: PFN_vkCmdSetFragmentShadingRateKHR,
+}
+unsafe impl Send for KhrFragmentShadingRateDeviceFn {}
+unsafe impl Sync for KhrFragmentShadingRateDeviceFn {}
+impl KhrFragmentShadingRateDeviceFn {
+    pub fn load<F>(mut _f: F) -> Self
+    where
+        F: FnMut(&::std::ffi::CStr) -> *const c_void,
+    {
+        Self {
             cmd_set_fragment_shading_rate_khr: unsafe {
                 unsafe extern "system" fn cmd_set_fragment_shading_rate_khr(
                     _command_buffer: CommandBuffer,
@@ -12834,7 +12988,7 @@ impl StructureType {
         Self(1_000_254_001);
     pub const PHYSICAL_DEVICE_PROVOKING_VERTEX_PROPERTIES_EXT: Self = Self(1_000_254_002);
 }
-impl ExtFullScreenExclusiveFn {
+impl ExtFullScreenExclusiveInstanceFn {
     pub const NAME: &'static ::std::ffi::CStr = unsafe {
         ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"VK_EXT_full_screen_exclusive\0")
     };
@@ -12847,29 +13001,14 @@ pub type PFN_vkGetPhysicalDeviceSurfacePresentModes2EXT = unsafe extern "system"
     p_present_mode_count: *mut u32,
     p_present_modes: *mut PresentModeKHR,
 ) -> Result;
-#[allow(non_camel_case_types)]
-pub type PFN_vkAcquireFullScreenExclusiveModeEXT =
-    unsafe extern "system" fn(device: Device, swapchain: SwapchainKHR) -> Result;
-#[allow(non_camel_case_types)]
-pub type PFN_vkReleaseFullScreenExclusiveModeEXT =
-    unsafe extern "system" fn(device: Device, swapchain: SwapchainKHR) -> Result;
-#[allow(non_camel_case_types)]
-pub type PFN_vkGetDeviceGroupSurfacePresentModes2EXT = unsafe extern "system" fn(
-    device: Device,
-    p_surface_info: *const PhysicalDeviceSurfaceInfo2KHR,
-    p_modes: *mut DeviceGroupPresentModeFlagsKHR,
-) -> Result;
 #[derive(Clone)]
-pub struct ExtFullScreenExclusiveFn {
+pub struct ExtFullScreenExclusiveInstanceFn {
     pub get_physical_device_surface_present_modes2_ext:
         PFN_vkGetPhysicalDeviceSurfacePresentModes2EXT,
-    pub acquire_full_screen_exclusive_mode_ext: PFN_vkAcquireFullScreenExclusiveModeEXT,
-    pub release_full_screen_exclusive_mode_ext: PFN_vkReleaseFullScreenExclusiveModeEXT,
-    pub get_device_group_surface_present_modes2_ext: PFN_vkGetDeviceGroupSurfacePresentModes2EXT,
 }
-unsafe impl Send for ExtFullScreenExclusiveFn {}
-unsafe impl Sync for ExtFullScreenExclusiveFn {}
-impl ExtFullScreenExclusiveFn {
+unsafe impl Send for ExtFullScreenExclusiveInstanceFn {}
+unsafe impl Sync for ExtFullScreenExclusiveInstanceFn {}
+impl ExtFullScreenExclusiveInstanceFn {
     pub fn load<F>(mut _f: F) -> Self
     where
         F: FnMut(&::std::ffi::CStr) -> *const c_void,
@@ -12897,6 +13036,41 @@ impl ExtFullScreenExclusiveFn {
                     ::std::mem::transmute(val)
                 }
             },
+        }
+    }
+}
+impl ExtFullScreenExclusiveDeviceFn {
+    pub const NAME: &'static ::std::ffi::CStr = unsafe {
+        ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"VK_EXT_full_screen_exclusive\0")
+    };
+    pub const SPEC_VERSION: u32 = 4u32;
+}
+#[allow(non_camel_case_types)]
+pub type PFN_vkAcquireFullScreenExclusiveModeEXT =
+    unsafe extern "system" fn(device: Device, swapchain: SwapchainKHR) -> Result;
+#[allow(non_camel_case_types)]
+pub type PFN_vkReleaseFullScreenExclusiveModeEXT =
+    unsafe extern "system" fn(device: Device, swapchain: SwapchainKHR) -> Result;
+#[allow(non_camel_case_types)]
+pub type PFN_vkGetDeviceGroupSurfacePresentModes2EXT = unsafe extern "system" fn(
+    device: Device,
+    p_surface_info: *const PhysicalDeviceSurfaceInfo2KHR,
+    p_modes: *mut DeviceGroupPresentModeFlagsKHR,
+) -> Result;
+#[derive(Clone)]
+pub struct ExtFullScreenExclusiveDeviceFn {
+    pub acquire_full_screen_exclusive_mode_ext: PFN_vkAcquireFullScreenExclusiveModeEXT,
+    pub release_full_screen_exclusive_mode_ext: PFN_vkReleaseFullScreenExclusiveModeEXT,
+    pub get_device_group_surface_present_modes2_ext: PFN_vkGetDeviceGroupSurfacePresentModes2EXT,
+}
+unsafe impl Send for ExtFullScreenExclusiveDeviceFn {}
+unsafe impl Sync for ExtFullScreenExclusiveDeviceFn {}
+impl ExtFullScreenExclusiveDeviceFn {
+    pub fn load<F>(mut _f: F) -> Self
+    where
+        F: FnMut(&::std::ffi::CStr) -> *const c_void,
+    {
+        Self {
             acquire_full_screen_exclusive_mode_ext: unsafe {
                 unsafe extern "system" fn acquire_full_screen_exclusive_mode_ext(
                     _device: Device,
@@ -20656,7 +20830,7 @@ impl SubpassDescriptionFlags {
     pub const RASTERIZATION_ORDER_ATTACHMENT_DEPTH_ACCESS_EXT: Self = Self(0b10_0000);
     pub const RASTERIZATION_ORDER_ATTACHMENT_STENCIL_ACCESS_EXT: Self = Self(0b100_0000);
 }
-impl NvOpticalFlowFn {
+impl NvOpticalFlowInstanceFn {
     pub const NAME: &'static ::std::ffi::CStr =
         unsafe { ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"VK_NV_optical_flow\0") };
     pub const SPEC_VERSION: u32 = 1u32;
@@ -20668,6 +20842,49 @@ pub type PFN_vkGetPhysicalDeviceOpticalFlowImageFormatsNV = unsafe extern "syste
     p_format_count: *mut u32,
     p_image_format_properties: *mut OpticalFlowImageFormatPropertiesNV,
 ) -> Result;
+#[derive(Clone)]
+pub struct NvOpticalFlowInstanceFn {
+    pub get_physical_device_optical_flow_image_formats_nv:
+        PFN_vkGetPhysicalDeviceOpticalFlowImageFormatsNV,
+}
+unsafe impl Send for NvOpticalFlowInstanceFn {}
+unsafe impl Sync for NvOpticalFlowInstanceFn {}
+impl NvOpticalFlowInstanceFn {
+    pub fn load<F>(mut _f: F) -> Self
+    where
+        F: FnMut(&::std::ffi::CStr) -> *const c_void,
+    {
+        Self {
+            get_physical_device_optical_flow_image_formats_nv: unsafe {
+                unsafe extern "system" fn get_physical_device_optical_flow_image_formats_nv(
+                    _physical_device: PhysicalDevice,
+                    _p_optical_flow_image_format_info: *const OpticalFlowImageFormatInfoNV,
+                    _p_format_count: *mut u32,
+                    _p_image_format_properties: *mut OpticalFlowImageFormatPropertiesNV,
+                ) -> Result {
+                    panic!(concat!(
+                        "Unable to load ",
+                        stringify!(get_physical_device_optical_flow_image_formats_nv)
+                    ))
+                }
+                let cname = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    b"vkGetPhysicalDeviceOpticalFlowImageFormatsNV\0",
+                );
+                let val = _f(cname);
+                if val.is_null() {
+                    get_physical_device_optical_flow_image_formats_nv
+                } else {
+                    ::std::mem::transmute(val)
+                }
+            },
+        }
+    }
+}
+impl NvOpticalFlowDeviceFn {
+    pub const NAME: &'static ::std::ffi::CStr =
+        unsafe { ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"VK_NV_optical_flow\0") };
+    pub const SPEC_VERSION: u32 = 1u32;
+}
 #[allow(non_camel_case_types)]
 pub type PFN_vkCreateOpticalFlowSessionNV = unsafe extern "system" fn(
     device: Device,
@@ -20696,44 +20913,20 @@ pub type PFN_vkCmdOpticalFlowExecuteNV = unsafe extern "system" fn(
     p_execute_info: *const OpticalFlowExecuteInfoNV,
 );
 #[derive(Clone)]
-pub struct NvOpticalFlowFn {
-    pub get_physical_device_optical_flow_image_formats_nv:
-        PFN_vkGetPhysicalDeviceOpticalFlowImageFormatsNV,
+pub struct NvOpticalFlowDeviceFn {
     pub create_optical_flow_session_nv: PFN_vkCreateOpticalFlowSessionNV,
     pub destroy_optical_flow_session_nv: PFN_vkDestroyOpticalFlowSessionNV,
     pub bind_optical_flow_session_image_nv: PFN_vkBindOpticalFlowSessionImageNV,
     pub cmd_optical_flow_execute_nv: PFN_vkCmdOpticalFlowExecuteNV,
 }
-unsafe impl Send for NvOpticalFlowFn {}
-unsafe impl Sync for NvOpticalFlowFn {}
-impl NvOpticalFlowFn {
+unsafe impl Send for NvOpticalFlowDeviceFn {}
+unsafe impl Sync for NvOpticalFlowDeviceFn {}
+impl NvOpticalFlowDeviceFn {
     pub fn load<F>(mut _f: F) -> Self
     where
         F: FnMut(&::std::ffi::CStr) -> *const c_void,
     {
         Self {
-            get_physical_device_optical_flow_image_formats_nv: unsafe {
-                unsafe extern "system" fn get_physical_device_optical_flow_image_formats_nv(
-                    _physical_device: PhysicalDevice,
-                    _p_optical_flow_image_format_info: *const OpticalFlowImageFormatInfoNV,
-                    _p_format_count: *mut u32,
-                    _p_image_format_properties: *mut OpticalFlowImageFormatPropertiesNV,
-                ) -> Result {
-                    panic!(concat!(
-                        "Unable to load ",
-                        stringify!(get_physical_device_optical_flow_image_formats_nv)
-                    ))
-                }
-                let cname = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
-                    b"vkGetPhysicalDeviceOpticalFlowImageFormatsNV\0",
-                );
-                let val = _f(cname);
-                if val.is_null() {
-                    get_physical_device_optical_flow_image_formats_nv
-                } else {
-                    ::std::mem::transmute(val)
-                }
-            },
             create_optical_flow_session_nv: unsafe {
                 unsafe extern "system" fn create_optical_flow_session_nv(
                     _device: Device,

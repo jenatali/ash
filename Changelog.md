@@ -18,6 +18,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Inlined struct setters (#602)
 - Bumped MSRV from 1.59 to 1.60 (#709)
 - Replaced `const fn name()` with associated `NAME` constants (#715)
+- Separate low-level `*Fn` structs an high-level extension wrappers between instance and device functions, for the following extensions: (#TODO)
+  - `VK_KHR_swapchain`
+  - `VK_KHR_video_queue`
+  - `VK_KHR_device_group`
+  - `VK_KHR_performance_query`
+  - `VK_EXT_debug_utils`
+  - `VK_EXT_sample_locations`
+  - `VK_EXT_calibrated_timestamps`
+  - `VK_KHR_fragment_shading_rate`
+  - `VK_EXT_full_screen_exclusive`
+  - `VK_NV_optical_flow`
+  This not only allows loading `device`-optimized function pointers, it also prevents accidentally loading `instance` functions via `get_device_proc_addr()` which would always return `NULL`, making these `instance` functions always panic on the following high-level extension wrappers:
+  - `VK_KHR_swapchain`
+  - `VK_KHR_device_group`
+  - `VK_EXT_full_screen_exclusive`
 
 ### Removed
 

@@ -1167,7 +1167,37 @@ pub fn generate_extension_commands<'a>(
     cmd_aliases: &HashMap<&'a str, &'a str>,
     fn_cache: &mut HashSet<&'a str>,
 ) -> TokenStream {
-    let mut commands = Vec::new();
+    let spec_version = items
+        .iter()
+        .filter_map(get_variant!(vk_parse::ExtensionChild::Require { items }))
+        .flatten()
+        .filter_map(get_variant!(vk_parse::InterfaceItem::Enum))
+        .find(|e| e.name.contains("SPEC_VERSION"))
+        .and_then(|e| {
+            if let vk_parse::EnumSpec::Value { value, .. } = &e.spec {
+                let v: u32 = str::parse(value).unwrap();
+                Some(quote!(pub const SPEC_VERSION: u32 = #v;))
+            } else {
+                None
+            }
+        });
+
+    let byte_name_ident = Literal::byte_string(format!("{extension_name}\0").as_bytes());
+
+    let associated_constants = |ident: &Ident| {
+        quote!(
+            impl #ident {
+                pub const NAME: &'static ::std::ffi::CStr = unsafe {
+                    ::std::ffi::CStr::from_bytes_with_nul_unchecked(#byte_name_ident)
+                };
+                #spec_version
+            }
+        )
+    };
+
+    let mut instance_commands = Vec::new();
+    let mut device_commands = Vec::new();
+
     let mut rename_commands = HashMap::new();
     let names = items
         .iter()
@@ -1189,45 +1219,73 @@ pub fn generate_extension_commands<'a>(
             name = cmd;
         }
 
-        commands.push(cmd_map[name]);
+        let command = cmd_map[name];
+        match command.function_type() {
+            FunctionType::Static => unreachable!(),
+            FunctionType::Entry => unreachable!(),
+            FunctionType::Instance => instance_commands.push(command),
+            FunctionType::Device => device_commands.push(command),
+        }
     }
 
-    let ident = format_ident!(
-        "{}Fn",
-        extension_name
-            .to_upper_camel_case()
-            .strip_prefix("Vk")
-            .unwrap()
-    );
-    let fp = generate_function_pointers(ident.clone(), &commands, &rename_commands, fn_cache);
-
-    let spec_version = items
-        .iter()
-        .filter_map(get_variant!(vk_parse::ExtensionChild::Require { items }))
-        .flatten()
-        .filter_map(get_variant!(vk_parse::InterfaceItem::Enum))
-        .find(|e| e.name.contains("SPEC_VERSION"))
-        .and_then(|e| {
-            if let vk_parse::EnumSpec::Value { value, .. } = &e.spec {
-                let v: u32 = str::parse(value).unwrap();
-                Some(quote!(pub const SPEC_VERSION: u32 = #v;))
+    // Also use the "instance" code below to generate an "untagged" (i.e. no Instance nor Device suffix)
+    // if this extension has no functions at all:
+    let generate_instance_commands = !instance_commands.is_empty() || device_commands.is_empty();
+    let instance_fp = generate_instance_commands.then(|| {
+        let instance_ident = format_ident!(
+            "{}{}Fn",
+            extension_name
+                .to_upper_camel_case()
+                .strip_prefix("Vk")
+                .unwrap(),
+            if device_commands.is_empty() {
+                ""
             } else {
-                None
-            }
-        });
+                "Instance"
+            },
+        );
 
-    let byte_name_ident = Literal::byte_string(format!("{extension_name}\0").as_bytes());
-    let extension_cstr = quote! {
-        impl #ident {
-            pub const NAME: &'static ::std::ffi::CStr = unsafe {
-                ::std::ffi::CStr::from_bytes_with_nul_unchecked(#byte_name_ident)
-            };
-            #spec_version
+        let associated_constants = associated_constants(&instance_ident);
+        let fp = generate_function_pointers(
+            instance_ident,
+            &instance_commands,
+            &rename_commands,
+            fn_cache,
+        );
+
+        quote! {
+            #associated_constants
+            #fp
         }
-    };
+    });
+
+    let device_fp = (!device_commands.is_empty()).then(|| {
+        let device_ident = format_ident!(
+            "{}{}Fn",
+            extension_name
+                .to_upper_camel_case()
+                .strip_prefix("Vk")
+                .unwrap(),
+            if instance_commands.is_empty() {
+                ""
+            } else {
+                "Device"
+            },
+        );
+
+        let associated_constants = associated_constants(&device_ident);
+        let fp =
+            generate_function_pointers(device_ident, &device_commands, &rename_commands, fn_cache);
+
+        quote! {
+            #associated_constants
+            #fp
+        }
+    });
+
     quote! {
-        #extension_cstr
-        #fp
+        #instance_fp
+        #device_fp
     }
 }
 pub fn generate_extension<'a>(
