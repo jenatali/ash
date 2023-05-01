@@ -1724,25 +1724,15 @@ pub fn derive_debug(
         let param_ident = field.param_ident();
         let param_str = param_ident.to_string();
         let debug_value = if is_static_array(field) && field.basetype == "char" {
-            quote! {
-                &unsafe {
-                    ::std::ffi::CStr::from_ptr(self.#param_ident.as_ptr())
-                }
-            }
+            quote!(&wrap_cstr_slice_until_nul(&self.#param_ident))
         } else if param_str.contains("pfn") {
-            quote! {
-                &(self.#param_ident.map(|x| x as *const ()))
-            }
+            quote!(&(self.#param_ident.map(|x| x as *const ())))
         } else if union_types.contains(field.basetype.as_str()) {
             quote!(&"union")
         } else {
-            quote! {
-                &self.#param_ident
-            }
+            quote!(&self.#param_ident)
         };
-        quote! {
-            .field(#param_str, #debug_value)
-        }
+        quote!(.field(#param_str, #debug_value))
     });
     let name_str = name.to_string();
     let lifetime = has_lifetime.then(|| quote!(<'_>));

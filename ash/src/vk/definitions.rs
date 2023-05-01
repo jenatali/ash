@@ -817,9 +817,7 @@ impl fmt::Debug for PhysicalDeviceProperties {
             .field("vendor_id", &self.vendor_id)
             .field("device_id", &self.device_id)
             .field("device_type", &self.device_type)
-            .field("device_name", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.device_name.as_ptr())
-            })
+            .field("device_name", &wrap_cstr_slice_until_nul(&self.device_name))
             .field("pipeline_cache_uuid", &self.pipeline_cache_uuid)
             .field("limits", &self.limits)
             .field("sparse_properties", &self.sparse_properties)
@@ -900,9 +898,10 @@ pub struct ExtensionProperties {
 impl fmt::Debug for ExtensionProperties {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.debug_struct("ExtensionProperties")
-            .field("extension_name", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.extension_name.as_ptr())
-            })
+            .field(
+                "extension_name",
+                &wrap_cstr_slice_until_nul(&self.extension_name),
+            )
             .field("spec_version", &self.spec_version)
             .finish()
     }
@@ -941,14 +940,10 @@ pub struct LayerProperties {
 impl fmt::Debug for LayerProperties {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.debug_struct("LayerProperties")
-            .field("layer_name", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.layer_name.as_ptr())
-            })
+            .field("layer_name", &wrap_cstr_slice_until_nul(&self.layer_name))
             .field("spec_version", &self.spec_version)
             .field("implementation_version", &self.implementation_version)
-            .field("description", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.description.as_ptr())
-            })
+            .field("description", &wrap_cstr_slice_until_nul(&self.description))
             .finish()
     }
 }
@@ -10657,12 +10652,8 @@ impl fmt::Debug for PhysicalDeviceDriverProperties<'_> {
             .field("s_type", &self.s_type)
             .field("p_next", &self.p_next)
             .field("driver_id", &self.driver_id)
-            .field("driver_name", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.driver_name.as_ptr())
-            })
-            .field("driver_info", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.driver_info.as_ptr())
-            })
+            .field("driver_name", &wrap_cstr_slice_until_nul(&self.driver_name))
+            .field("driver_info", &wrap_cstr_slice_until_nul(&self.driver_info))
             .field("conformance_version", &self.conformance_version)
             .finish()
     }
@@ -26625,15 +26616,9 @@ impl fmt::Debug for PerformanceCounterDescriptionKHR<'_> {
             .field("s_type", &self.s_type)
             .field("p_next", &self.p_next)
             .field("flags", &self.flags)
-            .field("name", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.name.as_ptr())
-            })
-            .field("category", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.category.as_ptr())
-            })
-            .field("description", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.description.as_ptr())
-            })
+            .field("name", &wrap_cstr_slice_until_nul(&self.name))
+            .field("category", &wrap_cstr_slice_until_nul(&self.category))
+            .field("description", &wrap_cstr_slice_until_nul(&self.description))
             .finish()
     }
 }
@@ -27712,12 +27697,8 @@ impl fmt::Debug for PipelineExecutablePropertiesKHR<'_> {
             .field("s_type", &self.s_type)
             .field("p_next", &self.p_next)
             .field("stages", &self.stages)
-            .field("name", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.name.as_ptr())
-            })
-            .field("description", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.description.as_ptr())
-            })
+            .field("name", &wrap_cstr_slice_until_nul(&self.name))
+            .field("description", &wrap_cstr_slice_until_nul(&self.description))
             .field("subgroup_size", &self.subgroup_size)
             .finish()
     }
@@ -27832,12 +27813,8 @@ impl fmt::Debug for PipelineExecutableStatisticKHR<'_> {
         fmt.debug_struct("PipelineExecutableStatisticKHR")
             .field("s_type", &self.s_type)
             .field("p_next", &self.p_next)
-            .field("name", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.name.as_ptr())
-            })
-            .field("description", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.description.as_ptr())
-            })
+            .field("name", &wrap_cstr_slice_until_nul(&self.name))
+            .field("description", &wrap_cstr_slice_until_nul(&self.description))
             .field("format", &self.format)
             .field("value", &"union")
             .finish()
@@ -27901,12 +27878,8 @@ impl fmt::Debug for PipelineExecutableInternalRepresentationKHR<'_> {
         fmt.debug_struct("PipelineExecutableInternalRepresentationKHR")
             .field("s_type", &self.s_type)
             .field("p_next", &self.p_next)
-            .field("name", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.name.as_ptr())
-            })
-            .field("description", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.description.as_ptr())
-            })
+            .field("name", &wrap_cstr_slice_until_nul(&self.name))
+            .field("description", &wrap_cstr_slice_until_nul(&self.description))
             .field("is_text", &self.is_text)
             .field("data_size", &self.data_size)
             .field("p_data", &self.p_data)
@@ -29409,12 +29382,8 @@ impl fmt::Debug for PhysicalDeviceVulkan12Properties<'_> {
             .field("s_type", &self.s_type)
             .field("p_next", &self.p_next)
             .field("driver_id", &self.driver_id)
-            .field("driver_name", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.driver_name.as_ptr())
-            })
-            .field("driver_info", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.driver_info.as_ptr())
-            })
+            .field("driver_name", &wrap_cstr_slice_until_nul(&self.driver_name))
+            .field("driver_info", &wrap_cstr_slice_until_nul(&self.driver_info))
             .field("conformance_version", &self.conformance_version)
             .field(
                 "denorm_behavior_independence",
@@ -30761,19 +30730,11 @@ impl fmt::Debug for PhysicalDeviceToolProperties<'_> {
         fmt.debug_struct("PhysicalDeviceToolProperties")
             .field("s_type", &self.s_type)
             .field("p_next", &self.p_next)
-            .field("name", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.name.as_ptr())
-            })
-            .field("version", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.version.as_ptr())
-            })
+            .field("name", &wrap_cstr_slice_until_nul(&self.name))
+            .field("version", &wrap_cstr_slice_until_nul(&self.version))
             .field("purposes", &self.purposes)
-            .field("description", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.description.as_ptr())
-            })
-            .field("layer", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.layer.as_ptr())
-            })
+            .field("description", &wrap_cstr_slice_until_nul(&self.description))
+            .field("layer", &wrap_cstr_slice_until_nul(&self.layer))
             .finish()
     }
 }
@@ -43563,9 +43524,7 @@ impl fmt::Debug for RenderPassSubpassFeedbackInfoEXT {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.debug_struct("RenderPassSubpassFeedbackInfoEXT")
             .field("subpass_merge_status", &self.subpass_merge_status)
-            .field("description", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.description.as_ptr())
-            })
+            .field("description", &wrap_cstr_slice_until_nul(&self.description))
             .field("post_merge_index", &self.post_merge_index)
             .finish()
     }
@@ -46299,9 +46258,7 @@ pub struct DeviceFaultVendorInfoEXT {
 impl fmt::Debug for DeviceFaultVendorInfoEXT {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.debug_struct("DeviceFaultVendorInfoEXT")
-            .field("description", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.description.as_ptr())
-            })
+            .field("description", &wrap_cstr_slice_until_nul(&self.description))
             .field("vendor_fault_code", &self.vendor_fault_code)
             .field("vendor_fault_data", &self.vendor_fault_data)
             .finish()
@@ -46397,9 +46354,7 @@ impl fmt::Debug for DeviceFaultInfoEXT<'_> {
         fmt.debug_struct("DeviceFaultInfoEXT")
             .field("s_type", &self.s_type)
             .field("p_next", &self.p_next)
-            .field("description", &unsafe {
-                ::std::ffi::CStr::from_ptr(self.description.as_ptr())
-            })
+            .field("description", &wrap_cstr_slice_until_nul(&self.description))
             .field("p_address_infos", &self.p_address_infos)
             .field("p_vendor_infos", &self.p_vendor_infos)
             .field("p_vendor_binary_data", &self.p_vendor_binary_data)

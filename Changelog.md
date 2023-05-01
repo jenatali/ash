@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Replaced builders with lifetimes/setters directly on Vulkan structs (#602)
 - Inlined struct setters (#602)
-- Bumped MSRV from 1.59 to 1.60 (#709)
+- Bumped MSRV from 1.59 to 1.69 (#709, #746)
 - Replaced `const fn name()` with associated `NAME` constants (#715)
 - extensions/khr: Take the remaining `p_next`-containing structs as `&mut` to allow chains (#744)
   - `AccelerationStructure::get_acceleration_structure_build_sizes()`
